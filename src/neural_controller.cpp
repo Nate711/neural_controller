@@ -47,6 +47,13 @@ controller_interface::CallbackReturn NeuralController::on_init() {
 
 controller_interface::CallbackReturn NeuralController::on_configure(
     const rclcpp_lifecycle::State & /*previous_state*/) {
+  // Initialize the command subscriber
+  cmd_subscriber_ = get_node()->create_subscription<CmdType>(
+      "/cmd_vel", rclcpp::SystemDefaultsQoS(),
+      [this](const CmdType::SharedPtr msg) {
+        rt_command_ptr_.writeFromNonRT(msg);
+      });
+
   RCLCPP_INFO(get_node()->get_logger(), "configure successful");
   return controller_interface::CallbackReturn::SUCCESS;
 }
@@ -93,13 +100,6 @@ controller_interface::CallbackReturn NeuralController::on_activate(
 
   cmd_x_vel_ = params_.default_cmd_x_vel;
   cmd_yaw_vel_ = params_.default_cmd_yaw_vel;
-
-  // Initialize the command subscriber
-  cmd_subscriber_ = get_node()->create_subscription<CmdType>(
-      "/cmd_vel", rclcpp::SystemDefaultsQoS(),
-      [this](const CmdType::SharedPtr msg) {
-        rt_command_ptr_.writeFromNonRT(msg);
-      });
 
   RCLCPP_INFO(get_node()->get_logger(), "activate successful");
   return controller_interface::CallbackReturn::SUCCESS;
